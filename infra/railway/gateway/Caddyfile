@@ -1,0 +1,20 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	encode zstd gzip
+
+	handle /_health {
+		respond "ok" 200
+	}
+
+	handle_path /api/* {
+		reverse_proxy api.railway.internal:8080
+	}
+
+	handle {
+		reverse_proxy web.railway.internal:3000
+	}
+}

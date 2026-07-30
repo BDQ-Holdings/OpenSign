@@ -24,6 +24,7 @@ const AddAdmin = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [setupToken, setSetupToken] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
   const [jobTitle, setJobTitle] = useState("");
@@ -93,7 +94,6 @@ const AddAdmin = () => {
       alert(t("valid-email-alert"));
     } else {
       if (lengthValid && caseDigitValid && specialCharValid) {
-        clearStorage();
         setState({ loading: true });
         const userDetails = {
           name: name,
@@ -102,9 +102,12 @@ const AddAdmin = () => {
           company: company,
           jobTitle: jobTitle
         };
-        localStorage.setItem("userDetails", JSON.stringify(userDetails));
         try {
-          event.preventDefault();
+          await Parse.Cloud.run("validateadminsetup", {
+            bootstrapToken: setupToken
+          });
+          await clearStorage();
+          localStorage.setItem("userDetails", JSON.stringify(userDetails));
           const user = new Parse.User();
           user.set("name", name);
           user.set("email", email?.toLowerCase()?.replace(/\s/g, ""));
@@ -114,6 +117,7 @@ const AddAdmin = () => {
           const userRes = await user.save();
           if (userRes) {
             const params = {
+              bootstrapToken: setupToken,
               userDetails: {
                 jobTitle: jobTitle,
                 company: company,
@@ -125,7 +129,10 @@ const AddAdmin = () => {
               }
             };
             try {
-              const usersignup = await Parse.Cloud.run("addadmin", params);
+              const usersignup = await Parse.Cloud.run(
+                "addadmin",
+                params
+              ).finally(() => setSetupToken(""));
               if (usersignup) {
                 if (isSubscribeNews) {
                   subscribeNewsletter();
@@ -138,6 +145,7 @@ const AddAdmin = () => {
             }
           }
         } catch (error) {
+          setSetupToken("");
           console.log("err ", error);
           if (error.code === 202) {
             const params = { email: email };
@@ -381,6 +389,28 @@ const AddAdmin = () => {
                       onInput={(e) => e.target.setCustomValidity("")}
                       required
                     />
+                    <hr className="my-2 border-none" />
+                    <label htmlFor="setup-token">
+                      Administrator setup token
+                      <span className="text-[red] text-[13px]">*</span>
+                    </label>
+                    <input
+                      id="setup-token"
+                      name="setupToken"
+                      type="password"
+                      autoComplete="off"
+                      className="op-input op-input-bordered op-input-sm focus:outline-none hover:border-base-content w-full text-xs"
+                      value={setupToken}
+                      onChange={(e) => setSetupToken(e.target.value)}
+                      onInvalid={(e) =>
+                        e.target.setCustomValidity(t("input-required"))
+                      }
+                      onInput={(e) => e.target.setCustomValidity("")}
+                      required
+                    />
+                    <p className="mt-1 text-[11px] text-base-content/70">
+                      Enter the one-time token configured by your administrator.
+                    </p>
                     <hr className="my-2 border-none" />
                     <label>
                       {t("password")}

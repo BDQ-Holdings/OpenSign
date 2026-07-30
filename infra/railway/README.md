@@ -53,9 +53,30 @@ SMTP_USERNAME=resend
 SMTP_USER_EMAIL=signatures@bdqholdings.com
 ```
 
-Set `MASTER_KEY`, `MONGODB_URI`, `PFX_BASE64`, and `PASS_PHRASE` as Railway
-secrets. Store a dedicated, send-only Resend API key in `SMTP_PASS`, then set
+Set `MASTER_KEY`, `MONGODB_URI`, `PFX_BASE64`, `PASS_PHRASE`, and
+`ADMIN_BOOTSTRAP_TOKEN` as secrets on the Railway `api` service. Store a
+dedicated, send-only Resend API key in `SMTP_PASS`, then set
 `SMTP_ENABLE=true`. Never commit secret values.
+
+## Initial administrator setup
+
+1. Generate a unique, high-entropy setup token and add it as the secret
+   `ADMIN_BOOTSTRAP_TOKEN` on the Railway `api` service. Do not add it to the
+   `web` service, a `REACT_APP_*` or `VITE_*` variable, or any public runtime
+   configuration.
+2. Redeploy the API, open `https://sign.bdqholdings.com/addadmin`, and enter the
+   same token in the **Administrator setup token** field along with the first
+   administrator's details.
+3. Confirm that the new administrator can sign in and reach the dashboard.
+4. Delete `ADMIN_BOOTSTRAP_TOKEN` from the API service and redeploy it. Create a
+   new token rather than restoring the old value if bootstrap access is ever
+   deliberately reopened.
+
+The browser validates the token with the API before it creates the Parse user,
+which prevents a typo from leaving an orphaned account. The `addadmin` Cloud
+Function validates the token again and also requires the authenticated user,
+matching email address, and absence of an existing active administrator. The
+server checks remain the authorization boundary.
 
 The bootstrap `PFX_BASE64` certificate is private and self-signed. Replace it
 with an organization-controlled certificate from a trusted PDF-signing

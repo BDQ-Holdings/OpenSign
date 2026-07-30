@@ -15,6 +15,25 @@ export function hasValidBootstrapToken(providedToken) {
   return expected.length === provided.length && crypto.timingSafeEqual(expected, provided);
 }
 
+async function ensureNoActiveAdmin() {
+  const adminQuery = new Parse.Query('contracts_Users');
+  adminQuery.equalTo('UserRole', 'contracts_Admin');
+  adminQuery.notEqualTo('IsDisabled', true);
+  const existingAdmin = await adminQuery.first({ useMasterKey: true });
+  if (existingAdmin) {
+    throw new Parse.Error(Parse.Error.DUPLICATE_VALUE, 'An administrator already exists.');
+  }
+}
+
+export async function validateInitialAdminSetup(request) {
+  if (!hasValidBootstrapToken(request.params?.bootstrapToken)) {
+    throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, 'Invalid administrator bootstrap token.');
+  }
+
+  await ensureNoActiveAdmin();
+  return { valid: true };
+}
+
 export async function authorizeInitialAdmin(request, requestedEmail) {
   if (!request.user) {
     throw new Parse.Error(Parse.Error.SESSION_MISSING, 'An authenticated user is required.');
@@ -30,17 +49,7 @@ export async function authorizeInitialAdmin(request, requestedEmail) {
     );
   }
 
-  if (!hasValidBootstrapToken(request.params.bootstrapToken)) {
-    throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, 'Invalid administrator bootstrap token.');
-  }
-
-  const adminQuery = new Parse.Query('contracts_Users');
-  adminQuery.equalTo('UserRole', 'contracts_Admin');
-  adminQuery.notEqualTo('IsDisabled', true);
-  const existingAdmin = await adminQuery.first({ useMasterKey: true });
-  if (existingAdmin) {
-    throw new Parse.Error(Parse.Error.DUPLICATE_VALUE, 'An administrator already exists.');
-  }
+  await validateInitialAdminSetup(request);
 
   return {
     id: request.user.id,
@@ -206,6 +215,14 @@ export default async function AddAdmin(request) {
       return { message: 'User sign up', sessionToken: user.sessionToken };
     }
   } catch (err) {
-    console.log('Err ', err);
+    if (err instanceof Parse.Error) {
+      throw err;
+    }
+
+    console.error('Administrator setup failed.', { name: err?.name });
+    throw new Parse.Error(
+      Parse.Error.INTERNAL_SERVER_ERROR,
+      'Unable to complete administrator setup.'
+    );
   }
 }

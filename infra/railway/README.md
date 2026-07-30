@@ -46,15 +46,20 @@ PARSE_MOUNT=/app
 PUBLIC_URL=https://sign.bdqholdings.com
 SERVER_URL=https://sign.bdqholdings.com/api/app
 USE_LOCAL=true
-SMTP_ENABLE=true
-SMTP_HOST=smtp.gmail.com
+SMTP_ENABLE=false
+SMTP_HOST=smtp.resend.com
 SMTP_PORT=465
-SMTP_USERNAME=signatures@bdqholdings.com
+SMTP_USERNAME=resend
 SMTP_USER_EMAIL=signatures@bdqholdings.com
 ```
 
-Set `MASTER_KEY`, `MONGODB_URI`, `SMTP_PASS`, `PFX_BASE64`, and `PASS_PHRASE`
-as Railway secrets. Never commit their values.
+Set `MASTER_KEY`, `MONGODB_URI`, `PFX_BASE64`, and `PASS_PHRASE` as Railway
+secrets. Store a dedicated, send-only Resend API key in `SMTP_PASS`, then set
+`SMTP_ENABLE=true`. Never commit secret values.
+
+The bootstrap `PFX_BASE64` certificate is private and self-signed. Replace it
+with an organization-controlled certificate from a trusted PDF-signing
+provider if Adobe trust-chain validation is required.
 
 Attach the API upload volume at `/usr/src/app/files/files`. Mounting the parent
 `/usr/src/app/files` directory would hide the email templates included in the

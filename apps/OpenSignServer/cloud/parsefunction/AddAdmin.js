@@ -1,8 +1,53 @@
-import axios from 'axios';
-import { cloudServerUrl, serverAppId } from '../../Utils.js';
-const serverUrl = cloudServerUrl; //process.env.SERVER_URL;
-const APPID = serverAppId;
-const masterKEY = process.env.MASTER_KEY;
+import crypto from 'node:crypto';
+
+export function normalizeEmail(value) {
+  return typeof value === 'string' ? value.toLowerCase().replace(/\s/g, '') : '';
+}
+
+export function hasValidBootstrapToken(providedToken) {
+  const expectedToken = process.env.ADMIN_BOOTSTRAP_TOKEN;
+  if (!expectedToken || typeof providedToken !== 'string') {
+    return false;
+  }
+
+  const expected = Buffer.from(expectedToken);
+  const provided = Buffer.from(providedToken);
+  return expected.length === provided.length && crypto.timingSafeEqual(expected, provided);
+}
+
+export async function authorizeInitialAdmin(request, requestedEmail) {
+  if (!request.user) {
+    throw new Parse.Error(Parse.Error.SESSION_MISSING, 'An authenticated user is required.');
+  }
+
+  const authenticatedEmail = normalizeEmail(
+    request.user.get('email') || request.user.get('username')
+  );
+  if (!requestedEmail || requestedEmail !== authenticatedEmail) {
+    throw new Parse.Error(
+      Parse.Error.OPERATION_FORBIDDEN,
+      'The authenticated user does not match the requested administrator.'
+    );
+  }
+
+  if (!hasValidBootstrapToken(request.params.bootstrapToken)) {
+    throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, 'Invalid administrator bootstrap token.');
+  }
+
+  const adminQuery = new Parse.Query('contracts_Users');
+  adminQuery.equalTo('UserRole', 'contracts_Admin');
+  adminQuery.notEqualTo('IsDisabled', true);
+  const existingAdmin = await adminQuery.first({ useMasterKey: true });
+  if (existingAdmin) {
+    throw new Parse.Error(Parse.Error.DUPLICATE_VALUE, 'An administrator already exists.');
+  }
+
+  return {
+    id: request.user.id,
+    sessionToken: request.user.getSessionToken(),
+  };
+}
+
 async function addTeamAndOrg(extUser) {
   try {
     const extUserCls = new Parse.Query('contracts_Users');
@@ -59,46 +104,19 @@ async function addTeamAndOrg(extUser) {
   }
 }
 
-async function saveUser(userDetails) {
-  const userQuery = new Parse.Query(Parse.User);
-  userQuery.equalTo('username', userDetails.email?.toLowerCase()?.replace(/\s/g, ''));
-  const userRes = await userQuery.first({ useMasterKey: true });
-
-  if (userRes) {
-    const url = `${serverUrl}/loginAs`;
-    const axiosRes = await axios({
-      method: 'POST',
-      url: url,
-      headers: {
-        'Content-Type': 'application/json;charset=utf-8',
-        'X-Parse-Application-Id': APPID,
-        'X-Parse-Master-Key': masterKEY,
-      },
-      params: {
-        userId: userRes.id,
-      },
-    });
-    const login = await axiosRes.data;
-    // console.log("login ", login);
-    return { id: login.objectId, sessionToken: login.sessionToken };
-  } else {
-    const user = new Parse.User();
-    user.set('username', userDetails.email?.toLowerCase()?.replace(/\s/g, ''));
-    user.set('password', userDetails.password);
-    user.set('email', userDetails.email?.toLowerCase()?.replace(/\s/g, ''));
-    if (userDetails?.phone) {
-      user.set('phone', userDetails.phone);
-    }
-    user.set('name', userDetails.name);
-
-    const res = await user.signUp();
-    // console.log("res ", res);
-    return { id: res.id, sessionToken: res.getSessionToken() };
-  }
-}
 export default async function AddAdmin(request) {
-  const userDetails = request.params.userDetails;
-  const user = await saveUser(userDetails);
+  const requestedDetails = request.params?.userDetails;
+  if (!requestedDetails || typeof requestedDetails !== 'object') {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, 'Administrator details are required.');
+  }
+
+  const email = normalizeEmail(requestedDetails.email);
+  const userDetails = {
+    ...requestedDetails,
+    email,
+    role: 'contracts_Admin',
+  };
+  const user = await authorizeInitialAdmin(request, email);
 
   try {
     const extQuery = new Parse.Query('contracts_Users');

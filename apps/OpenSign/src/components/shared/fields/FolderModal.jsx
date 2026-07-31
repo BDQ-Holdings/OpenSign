@@ -3,12 +3,11 @@ import Parse from "parse";
 import CreateFolder from "./CreateFolder";
 import ModalUi from "../../../primitives/ModalUi";
 import { useTranslation } from "react-i18next";
+import { APP_NAME } from "../../../constant/brand";
 
 const FolderModal = (props) => {
   const { t } = useTranslation();
-  const appName =
-    "OpenSign™";
-  const drivename = appName === "OpenSign™" ? "OpenSign™" : "";
+  const drivename = APP_NAME;
   const [clickFolder, setClickFolder] = useState("");
   const [folderList, setFolderList] = useState([]);
   const [tabList, setTabList] = useState([]);

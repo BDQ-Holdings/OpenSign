@@ -2,6 +2,7 @@ import {
   useState,
   useRef,
 } from "react";
+import { APP_NAME } from "../../constant/brand";
 import {
   base64ToArrayBuffer,
   convertBase64ToFile,
@@ -30,8 +31,7 @@ const EditTemplate = ({
   setPdfBase64Url,
   isAddYourSelfCheckbox,
 }) => {
-  const appName =
-    "OpenSign™";
+  const appName = APP_NAME;
   const { t } = useTranslation();
   const inputFileRef = useRef(null);
   const [formData, setFormData] = useState({

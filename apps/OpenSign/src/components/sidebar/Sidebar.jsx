@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { APP_NAME } from "../../constant/brand";
 import Menu from "./Menu";
 import Submenu from "./SubMenu";
 import SocialMedia from "../SocialMedia";
@@ -110,12 +111,12 @@ const Sidebar = () => {
       </div>
       <nav
         className="op-menu op-menu-sm"
-        aria-label="OpenSign Sidebar Navigation"
+        aria-label={`${APP_NAME} sidebar navigation`}
       >
         <ul
           className="text-sm"
           role="menubar"
-          aria-label="OpenSign Sidebar Navigation"
+          aria-label={`${APP_NAME} sidebar navigation`}
         >
           {menuList.map((item) =>
             !item.children ? (

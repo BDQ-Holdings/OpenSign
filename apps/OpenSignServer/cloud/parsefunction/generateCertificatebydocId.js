@@ -5,11 +5,13 @@ import { PDFDocument } from 'pdf-lib';
 import fs from 'node:fs';
 import dotenv from 'dotenv';
 import GenerateCertificate from './pdf/GenerateCertificate.js';
-import { getSecureUrl } from '../../Utils.js';
+import {
+  getSecureUrl,
+  signatureContact,
+  signatureName,
+} from '../../Utils.js';
 import { parseUploadFile } from '../../utils/fileUtils.js';
 dotenv.config({ quiet: true });
-const eSignName = 'OpenSign';
-const eSigncontact = 'hello@opensignlabs.com';
 
 // `uploadFile` is used to create url in from pdfFile
 async function uploadFile(pdfName, filepath) {
@@ -69,10 +71,10 @@ export default async function generateCertificatebydocId(req) {
       //  `pdflibAddPlaceholder` is used to add code of only digital sign in certificate
       pdflibAddPlaceholder({
         pdfDoc: certificatePdf,
-        reason: `Digitally signed by ${eSignName}.`,
+        reason: `Digitally signed by ${signatureName}.`,
         location: 'n/a',
-        name: eSignName,
-        contactInfo: eSigncontact,
+        name: signatureName,
+        contactInfo: signatureContact,
         signatureLength: 16000,
       });
       const pdfWithPlaceholderBytes = await certificatePdf.save();

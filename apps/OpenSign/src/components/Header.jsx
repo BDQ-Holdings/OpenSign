@@ -12,6 +12,7 @@ import {
 } from "../constant/Utils";
 import { useTranslation } from "react-i18next";
 import { appInfo } from "../constant/appinfo";
+import { APP_NAME } from "../constant/brand";
 import { useDispatch } from "react-redux";
 import { toggleSidebar } from "../redux/reducers/sidebarReducer";
 import { sessionStatus } from "../redux/reducers/userReducer";
@@ -146,13 +147,13 @@ const Header = ({ isConsole, setIsLoggingOut }) => {
           >
             {applogo && (
               <img
-                className="object-contain h-full w-auto"
-                src={
-                      isDarkTheme
-                      ? "/static/js/assets/images/logo-dark.png"
-                      : applogo
-                }
-                alt="logo"
+                className={`object-contain h-full w-auto ${
+                  isDarkTheme && applogo === appInfo.applogo
+                    ? "brightness-0 invert"
+                    : ""
+                }`}
+                src={applogo}
+                alt={APP_NAME}
               />
             )}
           </div>

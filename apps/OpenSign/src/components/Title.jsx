@@ -1,7 +1,13 @@
 import { useLocation, matchPath } from "react-router";
 import { useTranslation } from "react-i18next";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useManifestUrl } from "../hook/useManifestUrl";
+import {
+  APP_FAVICON,
+  APP_NAME,
+  APP_SHORT_NAME,
+  BRAND_UPDATED_EVENT
+} from "../constant/brand";
 
 const TITLE_MAP = {
   "/": "login",
@@ -57,9 +63,18 @@ function resolveTitle(pathname, override) {
 export default function Title() {
   const { pathname, state } = useLocation();
   const { t } = useTranslation();
-  const appName =
-    "OpenSign™";
-  const logo = useMemo(() => localStorage.getItem("favicon"), []);
+  const appName = APP_NAME;
+  const [logo, setLogo] = useState(
+    () => localStorage.getItem("favicon") || APP_FAVICON
+  );
+
+  useEffect(() => {
+    const updateLogo = (event) => {
+      setLogo(event.detail?.favicon || APP_FAVICON);
+    };
+    window.addEventListener(BRAND_UPDATED_EVENT, updateLogo);
+    return () => window.removeEventListener(BRAND_UPDATED_EVENT, updateLogo);
+  }, []);
   const prefix = useMemo(
     () => resolveTitle(pathname, state?.title),
     [pathname, state?.title]
@@ -68,13 +83,13 @@ export default function Title() {
     () => (prefix ? `${t(prefix)} - ${appName}` : appName),
     [t, prefix, appName]
   );
-  const manifestUrl = useManifestUrl(appName, logo);
+  const manifestUrl = useManifestUrl(appName, logo, APP_SHORT_NAME);
 
   return (
     <>
       <title>{title}</title>
       <meta name="description" content={title} />
-      {logo && <link rel="icon" type="image/png" href={logo} />}
+      {logo && <link rel="icon" href={logo} />}
       <link rel="manifest" href={manifestUrl} />
     </>
   );

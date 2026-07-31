@@ -1,34 +1,35 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "OpenSign API v1",
-    "description": "This is API documentation for OpenSign API v1 based on the OpenAPI 3.1 specification. \n\nSome useful links:\n- [Official Website](https://www.opensignlabs.com)\n- [Github repo](https://github.com/opensignlabs/opensign)",
-    "termsOfService": "http://www.opensignlabs.com/terms/",
+    "title": "Sign By BDQ API v1",
+    "description": "API documentation for the Sign By BDQ deployment, powered by the open-source OpenSign project. \n\nUpstream links:\n- [OpenSign website](https://www.opensignlabs.com)\n- [Source repository](https://github.com/opensignlabs/opensign)",
     "contact": {
-      "email": "contact@opensignlabs.com"
+      "name": "BDQ Holdings",
+      "email": "drmustafa@bdqholdings.com",
+      "url": "https://bdqholdings.com"
     },
     "license": {
       "name": "AGPL 3.0",
-      "url": "http://github.com/opensignlabs/opensign/LICENSE"
+      "url": "https://github.com/opensignlabs/opensign/LICENSE"
     },
     "version": "1.0.0"
   },
   "externalDocs": {
     "description": "Find out more about OpenSign",
-    "url": "http://docs.opensignlabs.com"
+    "url": "https://docs.opensignlabs.com"
   },
   "servers": [
     {
-      "url": "https://app.opensignlabs.com/api/v1"
+      "url": "https://sign.bdqholdings.com/api/v1"
     }
   ],
   "tags": [
     {
-      "name": "OpenSign",
-      "description": "OpenSource DocuSign alternative",
+      "name": "Sign By BDQ",
+      "description": "BDQ's document-signing API, powered by OpenSign",
       "externalDocs": {
         "description": "Find out more",
-        "url": "http://www.opensignlabs.com"
+        "url": "https://www.opensignlabs.com"
       }
     },
     {

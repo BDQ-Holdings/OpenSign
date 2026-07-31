@@ -1,5 +1,11 @@
-import logo from "../assets/images/logo.png";
 import { getEnv } from "./Utils";
+import {
+  APP_DESCRIPTION,
+  APP_FAVICON,
+  APP_LOGO,
+  APP_NAME,
+  APP_SHORT_NAME
+} from "./brand";
 
 export function serverUrl_fn() {
   const env = getEnv();
@@ -10,17 +16,17 @@ export function serverUrl_fn() {
   return baseUrl;
 }
 export const appInfo = {
-  applogo: logo,
+  appName: APP_NAME,
+  shortName: APP_SHORT_NAME,
+  applogo: APP_LOGO,
   appId: process.env.REACT_APP_APPID ? process.env.REACT_APP_APPID : "opensign",
   baseUrl: serverUrl_fn(),
   defaultRole: "contracts_User",
-  fev_Icon:
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAALlJREFUaEPtmN0NwjAMBpNxYDKYiM1Yp90g93CKStH1NbIdfz921Dker2Pc+Js1cDF7MXAxASMGYkAigBI6vh9ZwoXP53uZoAYcvhwdA3mAVbI2aSb+9zFKU4IURB6j/HoPUIEa2G3iGIAhQQDlAUIoE2diabIklISS0NoFPebo77RF6OenEF3QntOm128he0GKrwHyACFoz2MgBqSGkpAEcHs47oHtN5AFakACqMNjQEMoE8SABFCHn4HE2zGHSLeEAAAAAElFTkSuQmCC",
+  fev_Icon: APP_FAVICON,
   googleClientId: process.env.REACT_APP_GOOGLECLIENTID
     ? `${process.env.REACT_APP_GOOGLECLIENTID}`
     : "",
-  metaDescription:
-    "The fastest way to sign PDFs & request signatures from others.",
+  metaDescription: APP_DESCRIPTION,
   settings: [
     {
       role: "contracts_Admin",

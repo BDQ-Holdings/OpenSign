@@ -80,10 +80,10 @@ module.exports = {
     themes: [
       {
         opensigndark: {
-          primary: "#007ACC", // VS Code blue - CTA & highlight color
+          primary: "#666666",
           "primary-content": "#FFFFFF",
 
-          secondary: "#1F2937", // Sidebar background (darker slate)
+          secondary: "#242424",
           "secondary-content": "#E5E7EB",
 
           accent: "#4A9EFF", // Lighter VS Code blue for hover, minor CTA
@@ -122,10 +122,10 @@ module.exports = {
       },
       {
         opensigncss: {
-          primary: "#002864",
-          "primary-content": "#cacccf",
-          secondary: "#29354a",
-          "secondary-content": "#c8d1e0",
+          primary: "#222222",
+          "primary-content": "#ffffff",
+          secondary: "#343434",
+          "secondary-content": "#ffffff",
           accent: "#E10032",
           "accent-content": "#ffd8d5",
           neutral: "#c1ccdb",

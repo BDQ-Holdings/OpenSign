@@ -5,9 +5,9 @@ import { NavLink, useNavigate } from "react-router";
 import Alert from "../primitives/Alert";
 import { useTranslation } from "react-i18next";
 import { emailRegex } from "../constant/const";
+import { APP_NAME } from "../constant/brand";
 const UpdateExistUserAdmin = () => {
-  const appName =
-    "OpenSign™";
+  const appName = APP_NAME;
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [formdata, setFormdata] = useState({ email: "", masterkey: "" });

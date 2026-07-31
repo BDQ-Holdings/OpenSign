@@ -17,7 +17,18 @@ dotenv.config({ quiet: true });
 
 export const cloudServerUrl = 'http://localhost:8080/app';
 export const serverAppId = process.env.APP_ID || 'opensign';
-export const appName = 'OpenSign™';
+export const appName = 'Sign By BDQ';
+export const brandColor = '#222222';
+export const supportEmail =
+  process.env.SUPPORT_EMAIL || 'drmustafa@bdqholdings.com';
+export const signatureName = appName;
+export const signatureContact = supportEmail;
+export const publicAppUrl = (
+  process.env.PUBLIC_URL ||
+  process.env.SERVER_URL?.replace(/\/api\/app\/?$/, '') ||
+  'http://localhost:3000'
+).replace(/\/+$/, '');
+export const brandLogoUrl = `${publicAppUrl}/brand/sign-by-bdq-email.png`;
 export const prefillDraftDocWidget = ['date', 'textbox', 'checkbox', 'radio button', 'image'];
 export const prefillDraftTemWidget = [
   'date',
@@ -666,10 +677,10 @@ export const getSecureUrl = url => {
 };
 
 export const mailTemplate = param => {
-  const themeColor = '#47a3ad';
+  const themeColor = brandColor;
   const subject = `${param.senderName} has requested you to sign "${param.title}"`;
   const AppName = appName;
-  const logo = `<img src='https://qikinnovation.ams3.digitaloceanspaces.com/logo.png' height='50' />`;
+  const logo = `<img src='${brandLogoUrl}' height='50' alt='${appName}' />`;
 
   const body =
     "<html><head><meta http-equiv='Content-Type' content='text/html;charset=UTF-8' /></head><body><div style='background-color:#f5f5f5;padding:20px'><div style='background:white;padding-bottom:20px'><div style='padding:10px'>" +

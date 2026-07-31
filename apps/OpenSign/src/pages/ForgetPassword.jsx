@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { APP_NAME } from "../constant/brand";
 import { useNavigate } from "react-router";
 import login_img from "../assets/images/login_img.svg";
 import Parse from "parse";
@@ -93,8 +94,8 @@ function ForgotPassword() {
             {image && (
               <img
                 src={image}
-                className="object-contain h-full"
-                alt="applogo"
+                className="object-contain h-full opensigndark:invert"
+                alt={APP_NAME}
               />
             )}
           </div>

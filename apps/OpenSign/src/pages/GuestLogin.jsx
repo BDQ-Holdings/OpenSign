@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { APP_NAME, storeBrand } from "../constant/brand";
 import { useNavigate, useParams } from "react-router";
 import axios from "axios";
 import {
@@ -8,7 +9,6 @@ import {
   contractUsers,
   saveLanguageInLocal
 } from "../constant/Utils";
-import logo from "../assets/images/logo.png";
 import { appInfo } from "../constant/appinfo";
 import Parse from "parse";
 import { useTranslation } from "react-i18next";
@@ -76,15 +76,10 @@ function GuestLogin() {
 
   //function generate serverUrl and parseAppId from url and save it in local storage
   const handleServerUrl = async () => {
-      setAppLogo(logo);
-    const favicon = localStorage.getItem("favicon");
+    setAppLogo(appInfo.applogo);
 
     localStorage.clear(); // Clears everything
-    localStorage.setItem("favicon", favicon);
-    localStorage.setItem(
-      "appname",
-        "OpenSign™"
-    );
+    storeBrand();
     //save isGuestSigner true in local to handle login flow header in mobile view
     localStorage.setItem("isGuestSigner", true);
     saveLanguageInLocal(i18n);
@@ -315,8 +310,8 @@ function GuestLogin() {
               {appLogo && (
                 <img
                   src={appLogo}
-                  className="object-contain h-full"
-                  alt="logo"
+                  className="object-contain h-full opensigndark:invert"
+                  alt={APP_NAME}
                 />
               )}
             </div>

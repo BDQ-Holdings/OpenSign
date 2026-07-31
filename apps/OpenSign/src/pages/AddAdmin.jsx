@@ -4,7 +4,6 @@ import { appInfo } from "../constant/appinfo";
 import { NavLink, useNavigate } from "react-router";
 import {
   getAppLogo,
-  openInNewTab,
   saveLanguageInLocal,
   usertimezone
 } from "../constant/Utils";
@@ -13,10 +12,10 @@ import { showTenant } from "../redux/reducers/ShowTenant";
 import Loader from "../primitives/Loader";
 import { useTranslation } from "react-i18next";
 import { emailRegex } from "../constant/const";
+import { APP_NAME } from "../constant/brand";
 
 const AddAdmin = () => {
-  const appName =
-    "OpenSign™";
+  const appName = APP_NAME;
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -31,8 +30,6 @@ const AddAdmin = () => {
   const [lengthValid, setLengthValid] = useState(false);
   const [caseDigitValid, setCaseDigitValid] = useState(false);
   const [specialCharValid, setSpecialCharValid] = useState(false);
-  const [isAuthorize, setIsAuthorize] = useState(false);
-  const [isSubscribeNews, setIsSubscribeNews] = useState(false);
   const [errMsg, setErrMsg] = useState("");
   const [state, setState] = useState({
     loading: false,
@@ -134,9 +131,6 @@ const AddAdmin = () => {
                 params
               ).finally(() => setSetupToken(""));
               if (usersignup) {
-                if (isSubscribeNews) {
-                  subscribeNewsletter();
-                }
                 handleNavigation(userRes.getSessionToken());
               }
             } catch (err) {
@@ -262,15 +256,6 @@ const AddAdmin = () => {
         /\d/.test(newPassword)
     );
     setSpecialCharValid(/[!@#$%^&*()\-_=+{};:,<.>]/.test(newPassword));
-  };
-  const subscribeNewsletter = async () => {
-    try {
-      const params = { name: name, email: email, domain: window.location.host };
-      await Parse.Cloud.run("newsletter", params);
-      // console.log("newsletter ", newsletter);
-    } catch (err) {
-      console.log("err in subscribeNewsletter", err);
-    }
   };
   return (
     <div className="h-screen flex justify-center">
@@ -466,52 +451,6 @@ const AddAdmin = () => {
                         </p>
                       </div>
                     )}
-                    <div className="mt-2.5 ml-1 flex flex-row items-center">
-                      <input
-                        type="checkbox"
-                        className="op-checkbox op-checkbox-sm"
-                        id="termsandcondition"
-                        checked={isAuthorize}
-                        onChange={(e) => setIsAuthorize(e.target.checked)}
-                        onInvalid={(e) =>
-                          e.target.setCustomValidity(t("input-required"))
-                        }
-                        onInput={(e) => e.target.setCustomValidity("")}
-                        required
-                      />
-                      <label
-                        className="text-xs cursor-pointer ml-1 mb-0"
-                        htmlFor="termsandcondition"
-                      >
-                        {t("agree")}
-                      </label>
-                      <span
-                        className="underline cursor-pointer ml-1"
-                        onClick={() =>
-                          openInNewTab(
-                            "https://www.opensignlabs.com/terms-and-conditions"
-                          )
-                        }
-                      >
-                        {t("term")}
-                      </span>
-                      <span>.</span>
-                    </div>
-                    <div className="mt-2.5 ml-1 flex flex-row items-center">
-                      <input
-                        type="checkbox"
-                        className="op-checkbox op-checkbox-sm"
-                        id="subscribetoopensign"
-                        checked={isSubscribeNews}
-                        onChange={(e) => setIsSubscribeNews(e.target.checked)}
-                      />
-                      <label
-                        className="text-xs cursor-pointer ml-1 mb-0"
-                        htmlFor="subscribetoopensign"
-                      >
-                        {t("subscribe-to-opensign")}
-                      </label>
-                    </div>
                   </div>
                   <div className="mx-4 text-center text-xs font-bold mb-3">
                     <button

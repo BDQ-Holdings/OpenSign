@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { APP_NAME } from "../constant/brand";
 import Parse from "parse";
 import { useDispatch } from "react-redux";
 import axios from "axios";
@@ -23,8 +24,7 @@ import { useTranslation } from "react-i18next";
 import SelectLanguage from "../components/pdf/SelectLanguage";
 
 function Login() {
-  const appName =
-    "OpenSign™";
+  const appName = APP_NAME;
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -73,6 +73,7 @@ function Login() {
   };
 
   const checkUserExt = async () => {
+    dispatch(fetchAppInfo());
     const app = await getAppLogo();
     if (app?.error === "invalid_json") {
       setErrMsg(t("server-down", { appName: appName }));
@@ -86,7 +87,6 @@ function Login() {
     } else {
       setImage(appInfo?.applogo || undefined);
     }
-    dispatch(fetchAppInfo());
     if (localStorage.getItem("accesstoken")) {
       setState({ ...state, loading: true });
       GetLoginData();
@@ -433,8 +433,10 @@ function Login() {
                 {image && (
                   <img
                     src={image}
-                    className="object-contain h-full"
-                    alt="applogo"
+                    className={`object-contain h-full ${
+                      image === appInfo.applogo ? "opensigndark:invert" : ""
+                    }`}
+                    alt={APP_NAME}
                   />
                 )}
               </div>

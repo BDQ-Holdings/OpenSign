@@ -3,6 +3,7 @@ import {
   useEffect,
   useMemo
 } from "react";
+import { APP_NAME } from "../../constant/brand";
 import axios from "axios";
 import Loader from "../../primitives/Loader";
 import { useTranslation } from "react-i18next";
@@ -47,8 +48,7 @@ const ALL_EXCLUDED_TYPES = new Set([
 
 const BulkSendUi = (props) => {
   const { t } = useTranslation();
-  const appName =
-    "OpenSign™";
+  const appName = APP_NAME;
   const dispatch = useDispatch();
   const { isBulkLoader } = useSelector((state) => state.widget);
   const [forms, setForms] = useState([]);

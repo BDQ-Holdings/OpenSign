@@ -1,52 +1,51 @@
 import React from "react";
-import { useTranslation } from "react-i18next";
-import { NavLink } from "react-router";
+import {
+  APP_NAME,
+  COMPANY_LINKEDIN,
+  COMPANY_WEBSITE,
+  COMPANY_X,
+  FORK_REPOSITORY,
+  SUPPORT_EMAIL
+} from "../constant/brand";
 
 const SocialMedia = () => {
-  const { t } = useTranslation();
-
   return (
     <React.Fragment>
-      <NavLink
-        to="https://github.com/opensignlabs/opensign"
+      <a
+        href={FORK_REPOSITORY}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label={`${APP_NAME} source code on GitHub`}
       >
         <i aria-hidden="true" className="fa-brands fa-github"></i>
-        <span className="fa-sr-only">
-          OpenSign&apos;s {t("social-media.github")}
-        </span>
-      </NavLink>
-      <NavLink
-        to="https://www.linkedin.com/company/opensign%E2%84%A2/"
+      </a>
+      <a
+        href={COMPANY_WEBSITE}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="BDQ Holdings website"
+      >
+        <i aria-hidden="true" className="fa-light fa-globe"></i>
+      </a>
+      <a
+        href={COMPANY_LINKEDIN}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="BDQ Holdings on LinkedIn"
       >
         <i aria-hidden="true" className="fa-brands fa-linkedin"></i>
-        <span className="fa-sr-only">
-          OpenSign&apos;s {t("social-media.linked-in")}
-        </span>
-      </NavLink>
-      <NavLink
-        to="https://www.twitter.com/opensignlabs"
+      </a>
+      <a
+        href={COMPANY_X}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="BDQ Holdings on X"
       >
         <i aria-hidden="true" className="fa-brands fa-square-x-twitter"></i>
-        <span className="fa-sr-only">
-          OpenSign&apos;s {t("social-media.twitter")}
-        </span>
-      </NavLink>
-      <NavLink
-        to="https://discord.com/invite/xe9TDuyAyj"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <i aria-hidden="true" className="fa-brands fa-discord"></i>
-        <span className="fa-sr-only">
-          OpenSign&apos;s {t("social-media.discord")}
-        </span>
-      </NavLink>
+      </a>
+      <a href={`mailto:${SUPPORT_EMAIL}`} aria-label={`Email ${APP_NAME}`}>
+        <i aria-hidden="true" className="fa-light fa-envelope"></i>
+      </a>
     </React.Fragment>
   );
 };

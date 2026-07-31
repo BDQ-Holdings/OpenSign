@@ -28,8 +28,8 @@ export default async function GenerateCertificate(docDetails) {
   const startX = 15;
   const startY = 15;
   const borderColor = rgb(0.12, 0.12, 0.12);
-  const titleColor = rgb(0, 0.2, 0.4); //rgb(0, 0.53, 0.71);
-  const titleUnderline = rgb(0, 0.2, 0.4); // rgb(0.12, 0.12, 0.12);
+  const titleColor = rgb(0.13, 0.13, 0.13);
+  const titleUnderline = rgb(0.13, 0.13, 0.13);
   const title = 25;
   const subtitle = 16;
   const text = 13;
@@ -106,9 +106,9 @@ export default async function GenerateCertificate(docDetails) {
   });
   page.drawImage(pngImage, {
     x: 30,
-    y: 790,
-    width: 100,
-    height: 25,
+    y: 787,
+    width: 110,
+    height: 33,
   });
 
   page.drawText(generatedOn, {

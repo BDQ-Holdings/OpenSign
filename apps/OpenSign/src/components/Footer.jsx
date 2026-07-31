@@ -3,8 +3,12 @@ import Package from "../../package.json";
 import axios from "axios";
 import { openInNewTab } from "../constant/Utils";
 import { useTranslation } from "react-i18next";
+import {
+  APP_NAME,
+  UPSTREAM_NAME,
+  UPSTREAM_REPOSITORY
+} from "../constant/brand";
 const Footer = () => {
-  const appName = "OpenSign™";
   const { t } = useTranslation();
   const [showButton, setShowButton] = useState(false);
   const [version, setVersion] = useState("");
@@ -41,20 +45,25 @@ const Footer = () => {
   }, []);
 
   const openUrl = () => {
-    openInNewTab(
-      "https://github.com/OpenSignLabs/OpenSign/releases/tag/" + version
-    );
+    const releaseUrl = version
+      ? `${UPSTREAM_REPOSITORY}/releases/tag/${version.trim()}`
+      : UPSTREAM_REPOSITORY;
+    openInNewTab(releaseUrl);
   };
   return (
     <>
       <footer className="op-footer op-footer-center py-3 bg-base-300 text-base-content text-center text-[13px]">
         <aside>
           <p>
-            {t("all-right")} &copy; {new Date().getFullYear()} &nbsp;
-            <span onClick={openUrl} className="hover:underline cursor-pointer">
-              {appName} ( {t("version")}:{" "}
+            {t("all-right")} &copy; {new Date().getFullYear()} {APP_NAME} ·{" "}
+            <button
+              type="button"
+              onClick={openUrl}
+              className="hover:underline cursor-pointer"
+            >
+              Powered by {UPSTREAM_NAME} ({t("version")}:{" "}
               {version ? version : `${Package.version} `})
-            </span>
+            </button>
           </p>
         </aside>
       </footer>

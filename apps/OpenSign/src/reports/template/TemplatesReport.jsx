@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { APP_NAME } from "../../constant/brand";
 import pad from "../../assets/images/pad.svg";
 import { Link, useLocation, useNavigate } from "react-router";
 import axios from "axios";
@@ -52,8 +53,7 @@ const TemplatesReport = (props) => {
   const dispatch = useDispatch();
   const titleElement = useElSize(titleRef);
   const { prefillImg, isBulkLoader } = useSelector((state) => state.widget);
-  const appName =
-    "OpenSign™";
+  const appName = APP_NAME;
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();

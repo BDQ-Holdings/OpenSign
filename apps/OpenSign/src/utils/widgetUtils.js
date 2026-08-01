@@ -493,19 +493,26 @@ export const loadPdfOnce = async (url) => {
 export const mailModalHead = (sendinOrder, mailStatus, isOwner) => {
   const HEAD = {
     success: "mails-sent",
+    failed: "mail-not-delivered",
     quotareached: "quota-mail-head",
+    dailyquotareached: "quota-mail-head",
     emailnotverified: "email-not-verified-head"
   };
 
-  return sendinOrder
-    ? isOwner
-      ? mailStatus === "emailnotverified"
-        ? "email-not-verified-head"
-        : "mail-status-head"
-      : mailStatus === "emailnotverified"
-        ? "email-not-verified-head"
-        : "mails-sent"
-    : (HEAD[mailStatus] ?? "mail-not-delivered");
+  // A send that did not succeed is never headlined as success. This has to
+  // outrank the send-in-order branch below, which otherwise reports "Mails
+  // Sent" to non-owners and prompts owners to sign, whatever the outcome.
+  if (mailStatus && mailStatus !== "success") {
+    return HEAD[mailStatus] ?? "mail-not-delivered";
+  }
+
+  // Send-in-order only emails the first signer. When that is the owner there
+  // is no delivery to report, so prompt them to sign instead.
+  if (sendinOrder) {
+    return isOwner ? "mail-status-head" : "mails-sent";
+  }
+
+  return HEAD[mailStatus] ?? "mail-not-delivered";
 };
 
 // Lexicographic order matches chronological order in YYYY-MM-DD

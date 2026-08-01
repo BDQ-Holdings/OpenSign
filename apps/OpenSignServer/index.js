@@ -15,6 +15,7 @@ import { app as customRoute } from './cloud/customRoute/customApp.js';
 import { exec } from 'child_process';
 import { createTransport } from 'nodemailer';
 import { appName, cloudServerUrl, serverAppId, smtpenable, smtpsecure, useLocal } from './Utils.js';
+import { mailsender, resendenable, sendViaResend } from './mailProvider.js';
 import { SSOAuth } from './auth/authadapter.js';
 import runDbMigrations from './migrationdb/index.js';
 import { validateSignedLocalUrl } from './cloud/parsefunction/getSignedUrl.js';
@@ -61,7 +62,10 @@ let transporterMail;
 let mailgunClient;
 let mailgunDomain;
 let isMailAdapter = false;
-if (smtpenable) {
+if (resendenable) {
+  // Resend sends over HTTPS, so it works on hosts that block outbound SMTP.
+  isMailAdapter = true;
+} else if (smtpenable) {
   try {
     let transporterConfig = {
       host: process.env.SMTP_HOST,
@@ -100,7 +104,6 @@ if (smtpenable) {
     console.log('Please provide valid Mailgun credentials');
   }
 }
-const mailsender = smtpenable ? process.env.SMTP_USER_EMAIL : process.env.MAILGUN_SENDER;
 export const config = {
   databaseURI:
     process.env.DATABASE_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/dev',
@@ -148,7 +151,9 @@ export const config = {
               },
             },
             apiCallback: async ({ payload, locale }) => {
-              if (mailgunClient) {
+              if (resendenable) {
+                await sendViaResend(payload);
+              } else if (mailgunClient) {
                 const mailgunPayload = ApiPayloadConverter.mailgun(payload);
                 await mailgunClient.messages.create(mailgunDomain, mailgunPayload);
               } else if (transporterMail) await transporterMail.sendMail(payload);

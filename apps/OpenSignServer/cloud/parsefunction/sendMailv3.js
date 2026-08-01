@@ -2,6 +2,7 @@ import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import { smtpenable, smtpsecure, updateMailCount } from '../../Utils.js';
 import { createTransport } from 'nodemailer';
+import { mailsender, resendenable, sendViaResend } from '../../mailProvider.js';
 async function sendMailProvider(req) {
   const extUserId = req.params?.extUserId || '';
   const reportMsg = `<p style="font-size: 13px; color:grey; text-align: center;">If you did not expect this message, contact the sender directly and use your email provider's spam controls.</p>`;
@@ -11,34 +12,37 @@ async function sendMailProvider(req) {
   try {
     let mailgunClient;
     let mailgunDomain;
-    if (smtpenable) {
-      let transporterConfig = {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT || 465,
-        secure: smtpsecure,
-      };
-
-      // ✅ Add auth only if BOTH username & password exist
-      const smtpUser = process.env.SMTP_USERNAME;
-      const smtpPass = process.env.SMTP_PASS;
-
-      if (smtpUser && smtpPass) {
-        transporterConfig.auth = {
-          user: process.env.SMTP_USERNAME ? process.env.SMTP_USERNAME : process.env.SMTP_USER_EMAIL,
-          pass: smtpPass,
+    if (!resendenable) {
+      if (smtpenable) {
+        let transporterConfig = {
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT || 465,
+          secure: smtpsecure,
         };
-      }
-      transporterSMTP = createTransport(transporterConfig);
-    } else {
-      if (mailgunApiKey) {
-        const mailgun = new Mailgun(formData);
-        mailgunClient = mailgun.client({ username: 'api', key: mailgunApiKey });
-        mailgunDomain = process.env.MAILGUN_DOMAIN;
+
+        // ✅ Add auth only if BOTH username & password exist
+        const smtpUser = process.env.SMTP_USERNAME;
+        const smtpPass = process.env.SMTP_PASS;
+
+        if (smtpUser && smtpPass) {
+          transporterConfig.auth = {
+            user: process.env.SMTP_USERNAME
+              ? process.env.SMTP_USERNAME
+              : process.env.SMTP_USER_EMAIL,
+            pass: smtpPass,
+          };
+        }
+        transporterSMTP = createTransport(transporterConfig);
+      } else {
+        if (mailgunApiKey) {
+          const mailgun = new Mailgun(formData);
+          mailgunClient = mailgun.client({ username: 'api', key: mailgunApiKey });
+          mailgunDomain = process.env.MAILGUN_DOMAIN;
+        }
       }
     }
 
     const from = req.params.from || '';
-    const mailsender = smtpenable ? process.env.SMTP_USER_EMAIL : process.env.MAILGUN_SENDER;
     const replyto = req.params?.replyto || '';
     const messageParams = {
       from: from + ' <' + mailsender + '>',
@@ -50,6 +54,17 @@ async function sendMailProvider(req) {
       cc: req.params.cc ? req.params.cc : undefined,
       replyTo: replyto ? replyto : undefined,
     };
+
+    if (resendenable) {
+      const res = await sendViaResend(messageParams);
+      if (res.status === 'success') {
+        if (extUserId) {
+          await updateMailCount(extUserId);
+        }
+        return { status: 'success' };
+      }
+      return { status: 'error' };
+    }
 
     if (transporterSMTP) {
       const res = await transporterSMTP.sendMail(messageParams);

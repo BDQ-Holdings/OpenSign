@@ -5,6 +5,7 @@ import Mailgun from 'mailgun.js';
 import { smtpenable, smtpsecure, updateMailCount } from '../../Utils.js';
 import { createTransport } from 'nodemailer';
 import axios from 'axios';
+import { mailsender, resendenable, sendViaResend } from '../../mailProvider.js';
 
 function safeUnlink(filePath, label = 'file') {
   if (fs.existsSync(filePath)) {
@@ -24,29 +25,33 @@ async function sendMailProvider(params) {
   try {
     let mailgunClient;
     let mailgunDomain;
-    if (smtpenable) {
-      let transporterConfig = {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT || 465,
-        secure: smtpsecure,
-      };
-
-      // ✅ Add auth only if BOTH username & password exist
-      const smtpUser = process.env.SMTP_USERNAME;
-      const smtpPass = process.env.SMTP_PASS;
-
-      if (smtpUser && smtpPass) {
-        transporterConfig.auth = {
-          user: process.env.SMTP_USERNAME ? process.env.SMTP_USERNAME : process.env.SMTP_USER_EMAIL,
-          pass: smtpPass,
+    if (!resendenable) {
+      if (smtpenable) {
+        let transporterConfig = {
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT || 465,
+          secure: smtpsecure,
         };
-      }
-      transporterSMTP = createTransport(transporterConfig);
-    } else {
-      if (mailgunApiKey) {
-        const mailgun = new Mailgun(formData);
-        mailgunClient = mailgun.client({ username: 'api', key: mailgunApiKey });
-        mailgunDomain = process.env.MAILGUN_DOMAIN;
+
+        // ✅ Add auth only if BOTH username & password exist
+        const smtpUser = process.env.SMTP_USERNAME;
+        const smtpPass = process.env.SMTP_PASS;
+
+        if (smtpUser && smtpPass) {
+          transporterConfig.auth = {
+            user: process.env.SMTP_USERNAME
+              ? process.env.SMTP_USERNAME
+              : process.env.SMTP_USER_EMAIL,
+            pass: smtpPass,
+          };
+        }
+        transporterSMTP = createTransport(transporterConfig);
+      } else {
+        if (mailgunApiKey) {
+          const mailgun = new Mailgun(formData);
+          mailgunClient = mailgun.client({ username: 'api', key: mailgunApiKey });
+          mailgunDomain = process.env.MAILGUN_DOMAIN;
+        }
       }
     }
     if (params.url) {
@@ -105,10 +110,13 @@ async function sendMailProvider(params) {
           let PdfBuffer = await readTolocal();
           const pdfName = params.pdfName && `${params.pdfName}.pdf`;
           const filename = params.filename;
+          // Nodemailer and Resend both read the Buffer from `content`; only
+          // Mailgun expects it in `data`.
+          const useContentField = resendenable || smtpenable;
           const file = {
             filename: filename || pdfName || 'exported.pdf',
-            content: smtpenable ? PdfBuffer : undefined,
-            data: smtpenable ? undefined : PdfBuffer,
+            content: useContentField ? PdfBuffer : undefined,
+            data: useContentField ? undefined : PdfBuffer,
           };
 
           let attachment;
@@ -119,8 +127,8 @@ async function sendMailProvider(params) {
               const certificateBuffer = fs.readFileSync(certificatePath);
               const certificate = {
                 filename: 'certificate.pdf',
-                content: smtpenable ? certificateBuffer : undefined, //fs.readFileSync('./exports/exported_file_1223.pdf'),
-                data: smtpenable ? undefined : certificateBuffer,
+                content: useContentField ? certificateBuffer : undefined, //fs.readFileSync('./exports/exported_file_1223.pdf'),
+                data: useContentField ? undefined : certificateBuffer,
               };
               attachment = [file, certificate];
             } catch (err) {
@@ -131,7 +139,6 @@ async function sendMailProvider(params) {
             attachment = [file];
           }
           const from = params.from || '';
-          const mailsender = smtpenable ? process.env.SMTP_USER_EMAIL : process.env.MAILGUN_SENDER;
           const replyto = params?.replyto || '';
           const messageParams = {
             from: from + ' <' + mailsender + '>',
@@ -139,8 +146,8 @@ async function sendMailProvider(params) {
             subject: params.subject,
             text: params.text || 'mail',
             html: params?.html ? params.html + reportMsg : '',
-            attachments: smtpenable ? attachment : undefined,
-            attachment: smtpenable ? undefined : attachment,
+            attachments: useContentField ? attachment : undefined,
+            attachment: useContentField ? undefined : attachment,
             bcc: params.bcc ? params.bcc : undefined,
             cc: params.cc ? params.cc : undefined,
             replyTo: replyto ? replyto : undefined,
@@ -149,6 +156,17 @@ async function sendMailProvider(params) {
             { path: certificatePath, label: 'certificate' },
             { path: testPdf, label: 'pdf' },
           ];
+          if (resendenable) {
+            const res = await sendViaResend(messageParams);
+            cleanupPaths.forEach(file => safeUnlink(file.path, file.label));
+            if (res.status === 'success') {
+              if (extUserId) {
+                await updateMailCount(extUserId);
+              }
+              return { status: 'success' };
+            }
+            return { status: 'error' };
+          }
           if (transporterSMTP) {
             const res = await transporterSMTP.sendMail(messageParams);
             console.log('smtp transporter res: ', res?.response);
@@ -184,7 +202,6 @@ async function sendMailProvider(params) {
       }
     } else {
       const from = params.from || '';
-      const mailsender = smtpenable ? process.env.SMTP_USER_EMAIL : process.env.MAILGUN_SENDER;
       const replyto = params?.replyto || '';
       const messageParams = {
         from: from + ' <' + mailsender + '>',
@@ -197,6 +214,16 @@ async function sendMailProvider(params) {
         replyTo: replyto ? replyto : undefined,
       };
 
+      if (resendenable) {
+        const res = await sendViaResend(messageParams);
+        if (res.status === 'success') {
+          if (extUserId) {
+            await updateMailCount(extUserId);
+          }
+          return { status: 'success' };
+        }
+        return { status: 'error' };
+      }
       if (transporterSMTP) {
         const res = await transporterSMTP.sendMail(messageParams);
         console.log('smtp transporter res: ', res?.response);

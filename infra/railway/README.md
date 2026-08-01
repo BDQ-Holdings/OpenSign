@@ -47,16 +47,31 @@ PUBLIC_URL=https://sign.bdqholdings.com
 SERVER_URL=https://sign.bdqholdings.com/api/app
 USE_LOCAL=true
 SMTP_ENABLE=false
-SMTP_HOST=smtp.resend.com
-SMTP_PORT=465
-SMTP_USERNAME=resend
 SMTP_USER_EMAIL=signatures@bdqholdings.com
 ```
 
 Set `MASTER_KEY`, `MONGODB_URI`, `PFX_BASE64`, `PASS_PHRASE`, and
 `ADMIN_BOOTSTRAP_TOKEN` as secrets on the Railway `api` service. Store a
-dedicated, send-only Resend API key in `SMTP_PASS`, then set
-`SMTP_ENABLE=true`. Never commit secret values.
+dedicated, send-only Resend API key in `RESEND_API_KEY` and leave
+`SMTP_ENABLE=false`. Never commit secret values.
+
+`RESEND_API_KEY` is the default because it delivers over HTTPS, which works on
+every Railway plan. Railway blocks outbound SMTP egress below the Pro plan, so
+an SMTP transport there only times out and mail fails silently. The server
+prefers Resend over both SMTP and Mailgun, and sends from `RESEND_SENDER` when
+it is set, otherwise from `SMTP_USER_EMAIL`.
+
+SMTP remains supported as the alternative, but it additionally requires a
+Railway Pro plan. To use it instead, leave `RESEND_API_KEY` unset and add these
+to the `api` service, keeping the API key itself a secret:
+
+```env
+SMTP_ENABLE=true
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=465
+SMTP_USERNAME=resend
+SMTP_PASS=<send-only Resend API key>
+```
 
 ## Initial administrator setup
 

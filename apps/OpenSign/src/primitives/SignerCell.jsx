@@ -45,7 +45,8 @@ const SignerCell = ({ reportName, item, handleRemovePrefill }) => {
       return {
         id: i,
         Email: getSignerEmail(x, item?.Signers) || x?.email || "-",
-        Activity: audit?.Activity?.toUpperCase() || "SENT",
+        // An absent audit event says nothing about email delivery.
+        Activity: audit?.Activity?.toUpperCase() || "PENDING",
         SignedOn: format(audit?.SignedOn),
         ViewedOn: format(audit?.ViewedOn)
       };

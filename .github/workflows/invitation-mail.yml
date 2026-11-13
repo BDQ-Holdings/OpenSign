@@ -1,0 +1,38 @@
+name: Invitation mail checks
+
+on:
+  pull_request:
+    branches: [production]
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/OpenSignServer/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: apps/OpenSignServer
+      - run: npm run test:unit && npm run test:security
+        working-directory: apps/OpenSignServer
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/OpenSign/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: apps/OpenSign
+      - run: npm test
+        working-directory: apps/OpenSign
+      - run: npx vite build
+        working-directory: apps/OpenSign

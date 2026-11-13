@@ -4605,7 +4605,7 @@ export const sendEmailToSigners = async (
 ) => {
   let htmlReqBody;
   const owner = pdfDetails?.[0]?.ExtUserPtr;
-  let sendMail;
+  const results = [];
   const getDocumentExpDate = pdfDetails?.[0]?.ExpiryDate?.iso;
   const getTemplateExpDate = new Date(pdfDetails[0]?.createdAt);
   getTemplateExpDate.setDate(
@@ -4723,6 +4723,8 @@ export const sendEmailToSigners = async (
       const defaultTemplate = mailTemplate(mailparam);
       let params = {
         extUserId: owner?.objectId,
+        documentId: pdfDetails?.[0]?.objectId,
+        signerId: signerMail[i].objectId,
         recipient: signerMail[i].Email,
         subject: replaceVar?.subject
           ? replaceVar?.subject
@@ -4732,12 +4734,14 @@ export const sendEmailToSigners = async (
         html: replaceVar?.body ? replaceVar?.body : defaultTemplate.body
       };
 
-      sendMail = await axios.post(url, params, { headers: headers });
+      const response = await axios.post(url, params, { headers: headers });
+      results.push({ recipient: signerMail[i].Email, ...response?.data?.result });
     } catch (error) {
-      console.log("error", error);
+      results.push({ recipient: signerMail[i].Email, status: "error" });
     }
   }
-  if (sendMail?.data?.result?.status === "success") {
+  const accepted = results.filter((result) => result.status === "success").length;
+  if (results.length > 0 && accepted === results.length) {
     const sessiontoken = localStorage.getItem("accesstoken");
     if (pdfDetails[0]?.objectId && sessiontoken) {
       try {
@@ -4770,9 +4774,9 @@ export const sendEmailToSigners = async (
         console.error("Error while updating doc: ", err);
       }
     }
-    return { status: "success" };
+    return { status: "success", results };
   } else {
-    return { status: sendMail?.data?.result?.status };
+    return { status: accepted > 0 ? "partial" : "error", results };
   }
 };
 /**

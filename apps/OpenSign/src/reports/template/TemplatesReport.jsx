@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { mailFailureMessage } from "../../utils/mailResult";
 import { APP_NAME } from "../../constant/brand";
 import pad from "../../assets/images/pad.svg";
 import { Link, useLocation, useNavigate } from "react-router";
@@ -704,6 +705,8 @@ const TemplatesReport = (props) => {
         doc?.ExtUserPtr?.Email ||
         "",
       extUserId: doc?.ExtUserPtr?.objectId,
+      documentId: doc?.objectId,
+      signerId: user?.signerObjId || user?.signerPtr?.objectId,
       recipient: userDetails?.Email,
       subject: mail.subject,
       from:
@@ -716,16 +719,15 @@ const TemplatesReport = (props) => {
       if (res?.data?.result?.status === "success") {
         showAlert("success", t("mail-sent-alert"));
         setIsResendMail({});
+        setIsNextStep({});
+        setUserDetails({});
       }
       else {
-        showAlert("danger", t("something-went-wrong-mssg"));
+        showAlert("danger", mailFailureMessage(res?.data?.result, t));
       }
     } catch (err) {
-      console.error("sendmail error", err);
-      showAlert("danger", t("something-went-wrong-mssg"));
+      showAlert("danger", mailFailureMessage(null, t));
     } finally {
-      setIsNextStep({});
-      setUserDetails({});
       setActLoader({});
     }
   });

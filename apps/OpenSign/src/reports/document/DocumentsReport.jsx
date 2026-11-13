@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { mailFailureMessage } from "../../utils/mailResult";
 import { APP_NAME } from "../../constant/brand";
 import pad from "../../assets/images/pad.svg";
 import recreatedoc from "../../assets/images/recreatedoc.png";
@@ -669,6 +670,8 @@ const DocumentsReport = (props) => {
     let params = {
       replyto: doc?.SenderMail || doc?.ExtUserPtr?.Email || "",
       extUserId: doc?.ExtUserPtr?.objectId,
+      documentId: doc?.objectId,
+      signerId: user?.signerObjId || user?.signerPtr?.objectId,
       recipient: userDetails?.Email,
       subject: mail.subject,
       from:
@@ -681,16 +684,15 @@ const DocumentsReport = (props) => {
       if (res?.data?.result?.status === "success") {
         showAlert("success", t("mail-sent-alert"));
         setIsResendMail({});
+        setIsNextStep({});
+        setUserDetails({});
       }
       else {
-        setResendErrMail(t("something-went-wrong-mssg"));
+        setResendErrMail(mailFailureMessage(res?.data?.result, t));
       }
     } catch (err) {
-      console.error("sendmail error", err);
-      setResendErrMail(t("something-went-wrong-mssg"));
+      setResendErrMail(mailFailureMessage(null, t));
     } finally {
-      setIsNextStep({});
-      setUserDetails({});
       setActLoader({});
     }
   });

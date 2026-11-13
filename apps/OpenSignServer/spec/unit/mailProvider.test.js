@@ -113,7 +113,12 @@ describe('sendViaResend', () => {
   test('reports success and surfaces the message id', async () => {
     stubFetch([{ status: 200, body: { id: 'msg_1' } }]);
     const res = await sendViaResend({ to: 'a@b.com', subject: 's' });
-    assert.deepEqual(res, { status: 'success', id: 'msg_1' });
+    assert.deepEqual(res, {
+      status: 'success',
+      id: 'msg_1',
+      provider: 'resend',
+      deliveryStatus: 'accepted',
+    });
     assert.equal(calls.length, 1);
   });
 
@@ -148,6 +153,44 @@ describe('sendViaResend', () => {
     const res = await sendViaResend({ to: 'a@b.com' });
     assert.equal(res.status, 'success');
     assert.equal(calls.length, 2);
+    assert.equal(
+      calls[0].init.headers['Idempotency-Key'],
+      calls[1].init.headers['Idempotency-Key']
+    );
+    assert.ok(calls[0].init.signal instanceof AbortSignal);
+  });
+
+  test('separate deliberate resends get separate idempotency keys', async () => {
+    stubFetch([{ status: 200, body: { id: 'msg_1' } }]);
+    await sendViaResend({ to: 'a@b.com' });
+    await sendViaResend({ to: 'a@b.com' });
+    assert.notEqual(
+      calls[0].init.headers['Idempotency-Key'],
+      calls[1].init.headers['Idempotency-Key']
+    );
+  });
+
+  test('does not claim acceptance without a provider message id', async () => {
+    stubFetch([{ status: 200, body: {} }]);
+    const res = await sendViaResend({ to: 'a@b.com' });
+    assert.equal(res.status, 'error');
+    assert.equal(res.error, 'invalid_provider_response');
+    assert.equal(calls.length, 1);
+  });
+
+  test('does not expose provider response bodies in error results or logs', async () => {
+    stubFetch([{ status: 422, body: { message: 'private recipient and signing token' } }]);
+    const logs = [];
+    const originalLog = console.log;
+    console.log = (...args) => logs.push(args);
+    try {
+      const res = await sendViaResend({ to: 'a@b.com' });
+      assert.equal(res.httpStatus, 422);
+      assert.equal(res.error, 'provider_rejected');
+      assert.equal(JSON.stringify([res, logs]).includes('private recipient'), false);
+    } finally {
+      console.log = originalLog;
+    }
   });
 
   test('gives up with an error once retries are exhausted', async () => {
@@ -161,5 +204,16 @@ describe('sendViaResend', () => {
     stubFetch([new Error('ECONNRESET')]);
     const res = await sendViaResend({ to: 'a@b.com' });
     assert.equal(res.status, 'error');
+  });
+
+  test('reports timeout without claiming the provider rejected or delivered the mail', async () => {
+    const timeout = new Error('private timeout detail');
+    timeout.name = 'TimeoutError';
+    stubFetch([timeout]);
+    const res = await sendViaResend({ to: 'a@b.com' });
+    assert.equal(res.error, 'provider_timeout');
+    assert.equal(res.status, 'error');
+    assert.ok(calls.every(call => call.init.signal instanceof AbortSignal));
+    assert.equal(new Set(calls.map(call => call.init.headers['Idempotency-Key'])).size, 1);
   });
 });

@@ -59,21 +59,26 @@ async function sendMailProvider(req) {
       const res = await sendViaResend(messageParams);
       if (res.status === 'success') {
         if (extUserId) {
-          await updateMailCount(extUserId);
+          // Accounting failure must not turn an accepted send into a retry.
+          try {
+            await updateMailCount(extUserId);
+          } catch {
+            console.log('sendmailv3 mail count update failed after acceptance');
+          }
         }
-        return { status: 'success' };
+        return res;
       }
-      return { status: 'error' };
+      return res;
     }
 
     if (transporterSMTP) {
       const res = await transporterSMTP.sendMail(messageParams);
       console.log('smtp transporter res: ', res?.response);
-      if (!res.err) {
+      if (!res.err && !res.rejected?.length && res.accepted?.length) {
         if (extUserId) {
           await updateMailCount(extUserId);
         }
-        return { status: 'success' };
+        return { status: 'success', provider: 'smtp', deliveryStatus: 'accepted' };
       }
     } else {
       if (mailgunApiKey) {
@@ -86,23 +91,34 @@ async function sendMailProvider(req) {
           return { status: 'success' };
         }
       } else {
-        return { status: 'error' };
+        return { status: 'error', error: 'mail_not_configured' };
       }
     }
   } catch (err) {
-    console.log(`sendmailv3 Error: ${err}`);
+    console.log('sendmailv3 transport failure');
     if (err) {
-      return { status: 'error' };
+      return { status: 'error', error: 'provider_unavailable' };
     }
   } finally {
     if (transporterSMTP) {
       transporterSMTP?.close?.();
     }
   }
+  return { status: 'error', error: 'provider_rejected' };
 }
 
 async function sendmailv3(req) {
   const nonCustomMail = await sendMailProvider(req);
+  const safeId = value =>
+    typeof value === 'string' && /^[a-zA-Z0-9_-]{1,100}$/.test(value) ? value : undefined;
+  console.log(
+    'invitation mail result: ',
+    JSON.stringify({
+      documentId: safeId(req.params?.documentId),
+      signerId: safeId(req.params?.signerId),
+      ...nonCustomMail,
+    })
+  );
   return nonCustomMail;
 }
 
